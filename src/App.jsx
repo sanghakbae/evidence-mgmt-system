@@ -291,6 +291,7 @@ export default function App() {
   const [cards, setCards] = useState([]);
   const [reportCardIds, setReportCardIds] = useState([]);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [bridgeStatus, setBridgeStatus] = useState({ ok: false, message: "" });
   const [isReportPreviewOpen, setIsReportPreviewOpen] = useState(false);
   const [reportPreviewHtml, setReportPreviewHtml] = useState("");
   const current = MENUS.find((m) => m.key === menu);
@@ -299,7 +300,45 @@ export default function App() {
     () => cards.filter((card) => reportCardIds.includes(card.id)),
     [cards, reportCardIds]
   );
-  const isConnected = !!BRIDGE_URL;
+  const isConnected = !!BRIDGE_URL && bridgeStatus.ok;
+
+  const checkBridge = async () => {
+    if (!BRIDGE_URL) {
+      setBridgeStatus({
+        ok: false,
+        message: "VITE_GOOGLE_BRIDGE_URL이 설정되지 않아 스프레드시트 데이터를 불러올 수 없습니다.",
+      });
+      return;
+    }
+    try {
+      const res = await fetch(`${BRIDGE_URL}?action=health&ts=${Date.now()}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.ok) {
+          setBridgeStatus({ ok: true, message: "" });
+          return;
+        }
+      }
+
+      // health 액션이 없는 구버전 Apps Script 호환: listCards 성공이면 연결됨 처리
+      const listRes = await fetch(`${BRIDGE_URL}?action=listCards&ts=${Date.now()}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+      if (!listRes.ok) throw new Error(`HTTP ${listRes.status}`);
+      const listData = await listRes.json();
+      if (!listData?.ok) throw new Error(listData?.message || "listCards 실패");
+      setBridgeStatus({ ok: true, message: "" });
+    } catch (err) {
+      setBridgeStatus({
+        ok: false,
+        message: `브리지 연결 실패: ${err?.message || "알 수 없는 오류"}`,
+      });
+    }
+  };
 
   const loadCards = async () => {
     if (!BRIDGE_URL) return;
@@ -311,6 +350,7 @@ export default function App() {
       });
       if (!res.ok) throw new Error("카드 조회 실패");
       const data = await res.json();
+      if (!data?.ok) throw new Error(data?.message || "listCards 실패");
       const normalized = Array.isArray(data.cards)
         ? data.cards.map((card) => {
             const categories = inferCategories(card.question, card.answer);
@@ -322,15 +362,22 @@ export default function App() {
           })
         : [];
       setCards(normalized);
+      setBridgeStatus({ ok: true, message: "" });
     } catch (err) {
       console.error(err);
+      setBridgeStatus({
+        ok: false,
+        message: `스프레드시트 데이터 로딩 실패: ${err?.message || "알 수 없는 오류"}`,
+      });
     } finally {
       setIsSyncing(false);
     }
   };
 
   useEffect(() => {
-    loadCards();
+    checkBridge().then(() => {
+      loadCards();
+    });
   }, []);
 
   const handleAddToReport = (cardId) => {
@@ -727,6 +774,11 @@ export default function App() {
             >
               <div className="menu-header text-2xl font-semibold tracking-tight text-white">{current?.label}</div>
             </motion.div>
+            {!isConnected && !!bridgeStatus.message && (
+              <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-[13px] text-rose-700">
+                {bridgeStatus.message}
+              </div>
+            )}
 
             {menu === "dashboard" && <DashboardView cards={cards} reportCount={reportCards.length} />}
             {menu === "register" && <RegisterView onCreateCard={handleCreateCard} isSyncing={isSyncing} />}
