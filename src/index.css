@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.app-shell {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.app-shell .menu-header {
+  font-size: 18px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.app-shell .section-header {
+  font-size: 20px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.app-shell .stat-label {
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.app-shell .stat-value {
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.app-shell .stat-sub {
+  font-size: 14px;
+  line-height: 1.35;
+}
