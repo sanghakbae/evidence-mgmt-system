@@ -34,9 +34,14 @@ jobs:
         env:
           # Pages 하위 경로 배포용 base
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
-          # Apps Script Web App URL (Repository Secrets에 등록)
-          VITE_GOOGLE_BRIDGE_URL: ${{ secrets.VITE_GOOGLE_BRIDGE_URL }}
-        run: npm run build
+          # Apps Script Web App URL (Repository Variables 또는 Secrets)
+          VITE_GOOGLE_BRIDGE_URL: ${{ vars.VITE_GOOGLE_BRIDGE_URL || secrets.VITE_GOOGLE_BRIDGE_URL }}
+        run: |
+          if [ -z "$VITE_GOOGLE_BRIDGE_URL" ]; then
+            echo "VITE_GOOGLE_BRIDGE_URL is missing. Set repository variable or secret."
+            exit 1
+          fi
+          npm run build
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -56,4 +61,3 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-
