@@ -10,6 +10,40 @@ import ReportView from "./views/ReportView";
 import { buildReportHtml } from "./utils/report";
 import { normalizeCard } from "./utils/categories";
 
+const CARD_CACHE_KEY = "consignee-audit.cards";
+const CARD_CACHE_TTL = 1000 * 60 * 3;
+
+function readCardCache() {
+  try {
+    const raw = window.localStorage.getItem(CARD_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const savedAt = Number(parsed?.savedAt || 0);
+    if (!savedAt || Date.now() - savedAt > CARD_CACHE_TTL) {
+      window.localStorage.removeItem(CARD_CACHE_KEY);
+      return null;
+    }
+
+    return Array.isArray(parsed?.cards) ? parsed.cards.map(normalizeCard) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCardCache(cards) {
+  try {
+    window.localStorage.setItem(
+      CARD_CACHE_KEY,
+      JSON.stringify({
+        savedAt: Date.now(),
+        cards,
+      })
+    );
+  } catch {
+    // Ignore storage failures and continue with in-memory state only.
+  }
+}
+
 export default function App() {
   const [menu, setMenu] = useState("dashboard");
   const [collapsed, setCollapsed] = useState(false);
@@ -45,6 +79,7 @@ export default function App() {
 
       const normalized = Array.isArray(data.cards) ? data.cards.map(normalizeCard) : [];
       setCards(normalized);
+      writeCardCache(normalized);
       setBridgeStatus({ ok: true, message: "" });
     } catch (err) {
       console.error(err);
@@ -76,6 +111,7 @@ export default function App() {
         const data = await res.json();
         if (data?.ok) {
           setBridgeStatus({ ok: true, message: "" });
+          await loadCards();
           return;
         }
       }
@@ -90,11 +126,14 @@ export default function App() {
   };
 
   useEffect(() => {
-    checkBridge().then(() => {
-      if (BRIDGE_URL) {
-        loadCards();
+    if (typeof window !== "undefined") {
+      const cachedCards = readCardCache();
+      if (cachedCards?.length) {
+        setCards(cachedCards);
       }
-    });
+    }
+
+    checkBridge();
   }, []);
 
   const handleAddToReport = (cardId) => {
@@ -160,7 +199,11 @@ export default function App() {
       }
 
       if (data?.card) {
-        setCards((prev) => [normalizeCard(data.card), ...prev]);
+        setCards((prev) => {
+          const nextCards = [normalizeCard(data.card), ...prev];
+          writeCardCache(nextCards);
+          return nextCards;
+        });
       } else {
         await loadCards();
       }
@@ -238,9 +281,13 @@ export default function App() {
       }
 
       if (data?.card) {
-        setCards((prev) =>
-          prev.map((card) => (String(card.id) === String(cardId) ? normalizeCard(data.card) : card))
-        );
+        setCards((prev) => {
+          const nextCards = prev.map((card) =>
+            String(card.id) === String(cardId) ? normalizeCard(data.card) : card
+          );
+          writeCardCache(nextCards);
+          return nextCards;
+        });
       } else {
         await loadCards();
       }
@@ -337,6 +384,7 @@ export default function App() {
       const verifyCards = Array.isArray(verifyData?.cards) ? verifyData.cards.map(normalizeCard) : [];
       const stillExists = verifyCards.some((card) => card.id === id);
       setCards(verifyCards);
+      writeCardCache(verifyCards);
 
       if (stillExists) {
         if (unknownActionCount >= deleteRequests.length - 1) {
