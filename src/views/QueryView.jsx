@@ -4,14 +4,12 @@ import { CategoryTags, EvidenceThumb, SectionCard } from "../components/ui";
 import { formatDateOnly } from "../utils/format";
 import { inferCategories } from "../utils/categories";
 
-function matchesQuestionByAnyCharacter(question, keyword) {
+function matchesQuestionByKeyword(question, keyword) {
   const source = String(question || "").toLowerCase();
   const query = String(keyword || "").trim().toLowerCase();
   if (!query) return true;
 
-  return [...new Set(query.replace(/\s+/g, "").split("").filter(Boolean))].some((char) =>
-    source.includes(char)
-  );
+  return source.includes(query);
 }
 
 function resizeTextarea(element) {
@@ -51,18 +49,7 @@ export default function QueryView({
       if (!matchesCategory) return false;
       if (!query) return true;
 
-      const matchesQuestion = matchesQuestionByAnyCharacter(card.question, query);
-      const matchesOthers = [
-        card.answer,
-        card.category,
-        ...(card.categories || []),
-        ...(card.evidences || []).map((evidence) => evidence.name),
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(query);
-
-      return matchesQuestion || matchesOthers;
+      return matchesQuestionByKeyword(card.question, query);
     });
   }, [cards, categoryFilter, keyword]);
 
