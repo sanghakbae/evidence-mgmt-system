@@ -12,6 +12,7 @@ import { normalizeCard } from "./utils/categories";
 
 const CARD_CACHE_KEY = "consignee-audit.cards";
 const CARD_CACHE_TTL = 1000 * 60 * 3;
+const MENU_CACHE_KEY = "consignee-audit.menu";
 
 function readCardCache() {
   try {
@@ -44,8 +45,20 @@ function writeCardCache(cards) {
   }
 }
 
+function readCachedMenu() {
+  try {
+    const cachedMenu = window.localStorage.getItem(MENU_CACHE_KEY);
+    return MENUS.some((item) => item.key === cachedMenu) ? cachedMenu : "dashboard";
+  } catch {
+    return "dashboard";
+  }
+}
+
 export default function App() {
-  const [menu, setMenu] = useState("dashboard");
+  const [menu, setMenu] = useState(() => {
+    if (typeof window === "undefined") return "dashboard";
+    return readCachedMenu();
+  });
   const [collapsed, setCollapsed] = useState(false);
   const [cards, setCards] = useState([]);
   const [reportCardIds, setReportCardIds] = useState([]);
@@ -135,6 +148,15 @@ export default function App() {
 
     checkBridge();
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(MENU_CACHE_KEY, menu);
+    } catch {
+      // Ignore storage failures and keep in-memory menu state.
+    }
+  }, [menu]);
 
   const handleAddToReport = (cardId) => {
     const normalizedId = String(cardId);
@@ -487,8 +509,8 @@ export default function App() {
           </div>
         </aside>
 
-        <main className="w-full bg-transparent p-4 md:p-6">
-          <div className="w-full">
+        <main className={`w-full bg-transparent p-4 md:p-6 ${menu === "query" ? "h-[100dvh] overflow-hidden" : ""}`}>
+          <div className={`w-full ${menu === "query" ? "flex h-full min-h-0 flex-col" : ""}`}>
             <div className="mb-3 flex items-center gap-2 lg:hidden">
               <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-900 text-white">
                 <Menu className="h-5 w-5" />
@@ -530,34 +552,36 @@ export default function App() {
               </div>
             )}
 
-            {menu === "dashboard" && (
-              <DashboardView
-                cards={cards}
-                reportCount={reportCards.length}
-                onSelectCategory={handleSelectDashboardCategory}
-              />
-            )}
-            {menu === "register" && <RegisterView onCreateCard={handleCreateCard} isSyncing={isSyncing} />}
-            {menu === "query" && (
-              <QueryView
-                cards={cards}
-                reportCardIds={reportCardIds}
-                categoryFilter={queryCategoryFilter}
-                onClearCategoryFilter={() => setQueryCategoryFilter("")}
-                onAddToReport={handleAddToReport}
-                onDeleteCard={handleDeleteCard}
-                onUpdateCard={handleUpdateCard}
-                isSyncing={isSyncing}
-              />
-            )}
-            {menu === "report" && (
-              <ReportView
-                reportCards={reportCards}
-                onGeneratePdf={handleGenerateReportPdf}
-                onUpdateCard={handleUpdateCard}
-                isSyncing={isSyncing}
-              />
-            )}
+            <div className={menu === "query" ? "min-h-0 flex-1" : ""}>
+              {menu === "dashboard" && (
+                <DashboardView
+                  cards={cards}
+                  reportCount={reportCards.length}
+                  onSelectCategory={handleSelectDashboardCategory}
+                />
+              )}
+              {menu === "register" && <RegisterView onCreateCard={handleCreateCard} isSyncing={isSyncing} />}
+              {menu === "query" && (
+                <QueryView
+                  cards={cards}
+                  reportCardIds={reportCardIds}
+                  categoryFilter={queryCategoryFilter}
+                  onClearCategoryFilter={() => setQueryCategoryFilter("")}
+                  onAddToReport={handleAddToReport}
+                  onDeleteCard={handleDeleteCard}
+                  onUpdateCard={handleUpdateCard}
+                  isSyncing={isSyncing}
+                />
+              )}
+              {menu === "report" && (
+                <ReportView
+                  reportCards={reportCards}
+                  onGeneratePdf={handleGenerateReportPdf}
+                  onUpdateCard={handleUpdateCard}
+                  isSyncing={isSyncing}
+                />
+              )}
+            </div>
           </div>
         </main>
       </div>

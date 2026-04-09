@@ -122,8 +122,8 @@ export function SectionCard({
   style,
 }) {
   return (
-    <div className={`rounded-md bg-white px-5 py-4 shadow-sm ring-1 ring-slate-200/80 ${className}`} style={style}>
-      <div className={`mb-3 flex min-h-10 items-start justify-between gap-3 ${headerClassName}`}>
+    <div className={`rounded-md bg-white px-4 py-3 shadow-sm ring-1 ring-slate-200/80 ${className}`} style={style}>
+      <div className={`mb-2.5 flex min-h-9 items-start justify-between gap-3 ${headerClassName}`}>
         <h3 className="section-header self-start text-left text-[15px] font-bold text-slate-900">{title}</h3>
         {action}
       </div>

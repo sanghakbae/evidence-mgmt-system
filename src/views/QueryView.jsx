@@ -207,13 +207,13 @@ export default function QueryView({
   };
 
   return (
-    <div className="query-layout-shell sm:h-[calc(100dvh-13.5rem)]">
+    <div className="query-layout-shell h-full">
       <div className="query-layout h-full">
         <SectionCard
           title="카드 조회"
-          className="flex h-full min-h-0 flex-col overflow-hidden"
+          className="flex h-full min-h-0 flex-col overflow-hidden px-3 py-2 pb-1.5 md:px-3.5 md:py-2 md:pb-2"
           bodyClassName="min-h-0 flex-1 overflow-auto"
-          headerClassName="items-center"
+          headerClassName="min-h-0 items-center"
           action={
             <div className="w-full max-w-[320px] space-y-2">
             <div className="relative w-full">
@@ -283,8 +283,9 @@ export default function QueryView({
 
         <SectionCard
           title="카드 상세"
-          className="flex h-full min-h-0 flex-col overflow-hidden"
+          className="flex h-full min-h-0 flex-col overflow-hidden px-3 py-2 pb-1.5 md:px-3.5 md:py-2 md:pb-2"
           bodyClassName="min-h-0 flex-1 overflow-auto"
+          headerClassName="min-h-0"
           action={
             <div className="flex flex-wrap items-center gap-2">
             <button
