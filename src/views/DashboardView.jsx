@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { CategoryTags, SectionCard, Stat } from "../components/ui";
 import { formatDateOnly, parseCardDate } from "../utils/format";
 
-export default function DashboardView({ cards, reportCount }) {
+export default function DashboardView({ cards, reportCount, onSelectCategory }) {
   const statTones = [
     "bg-gradient-to-br from-rose-50 to-rose-100/60 ring-rose-200/80",
     "bg-gradient-to-br from-sky-50 to-blue-100/60 ring-sky-200/80",
@@ -82,15 +82,15 @@ export default function DashboardView({ cards, reportCount }) {
     { label: "리포트 대상", value: reportCount, sub: "선택된 카드 기준" },
   ];
 
-  const recentCards = useMemo(() => cards.slice(0, 7), [cards]);
+  const recentCards = useMemo(() => cards.slice(0, 10), [cards]);
   const dashboardPanelHeight = useMemo(
-    () => Math.max(460, 260 + categoryEntries.length * 38),
+    () => Math.max(420, 240 + categoryEntries.length * 38),
     [categoryEntries.length]
   );
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-4 gap-2 md:gap-4">
         {statItems.map((item, idx) => (
           <Stat key={item.label} label={item.label} value={item.value} sub={item.sub} tone={statTones[idx]} />
         ))}
@@ -101,11 +101,7 @@ export default function DashboardView({ cards, reportCount }) {
           title="최근 등록 카드"
           className="flex flex-col overflow-hidden"
           bodyClassName="flex-1 overflow-auto"
-          style={{
-            height: `${dashboardPanelHeight}px`,
-            minHeight: `${dashboardPanelHeight}px`,
-            maxHeight: `${dashboardPanelHeight}px`,
-          }}
+          style={{ height: `min(68dvh, ${dashboardPanelHeight}px)`, minHeight: "320px" }}
         >
           {!cards.length && (
             <div className="rounded-md border border-dashed border-slate-300 p-6 text-sm text-slate-500">
@@ -116,9 +112,9 @@ export default function DashboardView({ cards, reportCount }) {
             <div className="space-y-2">
               {recentCards.map((card) => (
                 <div key={card.id} className="rounded-md border border-slate-200 bg-gradient-to-r from-white to-slate-50 p-3">
-                  <div className="mb-1.5 flex items-start gap-2 text-xs text-slate-500">
+                  <div className="mb-1.5 flex items-start justify-between gap-3 text-xs text-slate-500">
                     <CategoryTags categories={card.categories || [card.category]} />
-                    <span className="inline-flex h-6 items-center leading-none">{formatDateOnly(card.updatedAt)}</span>
+                    <span className="inline-flex h-6 shrink-0 items-center text-right leading-none">{formatDateOnly(card.updatedAt)}</span>
                   </div>
                   <div className="line-clamp-2 pl-1 text-[13px] font-medium leading-5 text-slate-900">{card.question}</div>
                 </div>
@@ -131,11 +127,7 @@ export default function DashboardView({ cards, reportCount }) {
           title="현황 요약(카테고리 분포)"
           className="flex flex-col overflow-hidden"
           bodyClassName="flex-1 overflow-hidden"
-          style={{
-            height: `${dashboardPanelHeight}px`,
-            minHeight: `${dashboardPanelHeight}px`,
-            maxHeight: `${dashboardPanelHeight}px`,
-          }}
+          style={{ height: `min(68dvh, ${dashboardPanelHeight}px)`, minHeight: "320px" }}
         >
           <div className="h-full">
             {!categoryEntries.length && (
@@ -144,9 +136,9 @@ export default function DashboardView({ cards, reportCount }) {
               </div>
             )}
             {!!categoryEntries.length && (
-              <div className="grid h-full gap-3 lg:grid-cols-[1fr_190px]">
-                <div className="flex h-full items-center justify-center rounded-md border border-slate-200 bg-white p-2">
-                  <div className="relative h-52 w-52">
+              <div className="grid h-full gap-1 lg:grid-cols-[minmax(0,1fr)_150px]">
+                <div className="flex h-full items-center justify-center rounded-md border border-slate-200 bg-white p-0">
+                  <div className="relative aspect-square w-full max-w-[21rem] md:max-w-[23rem]">
                     <div
                       className="h-full w-full rounded-full"
                       style={{
@@ -156,23 +148,28 @@ export default function DashboardView({ cards, reportCount }) {
                       }}
                     />
                     <div className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-br from-white/35 via-transparent to-black/10" />
-                    <div className="absolute inset-[22%] z-10 flex items-center justify-center rounded-full border border-slate-200/80 bg-slate-50 text-center shadow-[inset_0_2px_6px_rgba(15,23,42,0.06)]">
+                    <div className="absolute inset-[20%] z-10 flex items-center justify-center rounded-full border border-slate-200/80 bg-slate-50 text-center shadow-[inset_0_2px_6px_rgba(15,23,42,0.06)]">
                       <div>
                         <div className="text-xs text-slate-500">합계</div>
-                        <div className="text-sm font-bold text-slate-900">{totalCategoryCount}</div>
+                        <div className="text-base font-bold text-slate-900">{totalCategoryCount}</div>
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className="grid h-full gap-1.5" style={{ gridTemplateRows: `repeat(${Math.max(categoryEntries.length, 1)}, minmax(0, 1fr))` }}>
+                <div className="grid h-full auto-rows-min content-start gap-0.5">
                   {categoryEntries.map(([category, count], idx) => (
-                    <div key={category} className="flex h-full items-center justify-between rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-[13px] leading-tight">
-                      <div className="flex items-center gap-2">
-                        <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: donutPalette[idx % donutPalette.length] }} />
-                        <span className="text-slate-700">{category}</span>
+                    <button
+                      key={category}
+                      type="button"
+                      onClick={() => onSelectCategory?.(category)}
+                      className="flex min-h-[28px] items-center justify-between rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-left text-[12px] leading-none transition-colors hover:border-slate-300 hover:bg-slate-50"
+                    >
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: donutPalette[idx % donutPalette.length] }} />
+                        <span className="truncate text-slate-700">{category}</span>
                       </div>
-                      <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[12px] font-semibold text-slate-900">{count}</span>
-                    </div>
+                      <span className="ml-2 rounded-md bg-slate-100 px-1 py-0.5 text-[10px] font-semibold leading-none text-slate-900">{count}</span>
+                    </button>
                   ))}
                 </div>
               </div>

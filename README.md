@@ -1,4 +1,4 @@
-# 증적관리 시스템 (Evidence Management System)
+# 개인정보 수탁사 점검 대응 포털
 
 개인정보 수탁사 점검을 위한 카드형 증적 관리 웹앱입니다.  
 질문/답변/증적(이미지·문서)을 등록하고, 조회 후 리포트에 추가하여 출력 미리보기(PDF 인쇄)까지 수행할 수 있습니다.
@@ -66,6 +66,7 @@ VITE_GOOGLE_BRIDGE_URL=https://script.google.com/macros/s/배포ID/exec
 앱은 아래 액션을 사용합니다.
 - `GET ?action=listCards`
 - `POST { action: "createCard", ... }`
+- `POST { action: "updateCard", ... }`
 - `GET/POST deleteCard`
 
 필수:
@@ -131,4 +132,3 @@ npm run build
 
 ## 라이선스
 내부 운영용(Private) 기준으로 사용하십시오.
-

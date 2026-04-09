@@ -106,8 +106,8 @@ export function SidebarItem({ active, icon: Icon, label, onClick, collapsed }) {
           : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
       }`}
     >
-      <Icon className="h-4 w-4 shrink-0" />
-      {!collapsed && <span className="text-sm font-medium">{label}</span>}
+      <Icon className="h-[18px] w-[18px] shrink-0" />
+      {!collapsed && <span className="text-base font-semibold">{label}</span>}
     </button>
   );
 }

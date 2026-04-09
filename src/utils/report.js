@@ -9,7 +9,7 @@ export function buildReportHtml(reportCards) {
   const dateLabel = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
     now.getDate()
   ).padStart(2, "0")}`;
-  const title = `증적관리 시스템 리포트 (${dateLabel})`;
+  const title = `개인정보 수탁사 점검 대응 포털 리포트 (${dateLabel})`;
 
   const sections = reportCards
     .map((card, idx) => {

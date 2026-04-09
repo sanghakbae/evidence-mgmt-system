@@ -15,6 +15,7 @@ export default function App() {
   const [collapsed, setCollapsed] = useState(false);
   const [cards, setCards] = useState([]);
   const [reportCardIds, setReportCardIds] = useState([]);
+  const [queryCategoryFilter, setQueryCategoryFilter] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
   const [bridgeStatus, setBridgeStatus] = useState({ ok: false, message: "" });
   const [isReportPreviewOpen, setIsReportPreviewOpen] = useState(false);
@@ -102,6 +103,11 @@ export default function App() {
     setMenu("report");
   };
 
+  const handleSelectDashboardCategory = (category) => {
+    setQueryCategoryFilter(String(category || ""));
+    setMenu("query");
+  };
+
   const handleCreateCard = async ({ category, question, answer, files }) => {
     if (!BRIDGE_URL) {
       alert("VITE_GOOGLE_BRIDGE_URL 설정이 필요합니다. Google Apps Script Web App URL을 연결해 주세요.");
@@ -163,6 +169,86 @@ export default function App() {
     } catch (err) {
       console.error(err);
       alert(`카드 저장 중 오류가 발생했습니다.\n${err?.message || ""}`);
+      return false;
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleUpdateCard = async ({ cardId, question, answer, newFiles, removedEvidenceIds }) => {
+    if (!BRIDGE_URL) {
+      alert("VITE_GOOGLE_BRIDGE_URL 설정이 필요합니다. Google Apps Script Web App URL을 연결해 주세요.");
+      return false;
+    }
+
+    const toBase64 = (file) =>
+      new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || "");
+          const base64 = result.includes(",") ? result.split(",")[1] : result;
+          resolve(base64);
+        };
+        reader.onerror = () => reject(new Error("파일 인코딩 실패"));
+        reader.readAsDataURL(file);
+      });
+
+    const encodedFiles = await Promise.all(
+      (newFiles || []).map(async (file) => ({
+        name: file.name,
+        mimeType: file.type || "application/octet-stream",
+        base64: await toBase64(file),
+      }))
+    );
+
+    setIsSyncing(true);
+    try {
+      const categories = normalizeCard({ question, answer, categories: [] }).categories;
+      const res = await fetch(BRIDGE_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "updateCard",
+          id: String(cardId),
+          cardId: String(cardId),
+          category: categories[0] || "기타",
+          categories,
+          question,
+          answer,
+          files: encodedFiles,
+          newFiles: encodedFiles,
+          removedEvidenceIds: (removedEvidenceIds || []).map(String),
+        }),
+      });
+
+      const raw = await res.text();
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        data = null;
+      }
+
+      if (!res.ok || !data?.ok) {
+        const msg = data?.message || `카드 수정 실패 (${res.status})`;
+        const lowerMsg = String(msg).toLowerCase();
+        if (lowerMsg.includes("unknown action") || lowerMsg.includes("updatecard")) {
+          throw new Error("백엔드에 updateCard 액션이 배포되지 않았습니다. Apps Script에 updateCard를 추가하고 새 버전으로 재배포하세요.");
+        }
+        throw new Error(msg);
+      }
+
+      if (data?.card) {
+        setCards((prev) =>
+          prev.map((card) => (String(card.id) === String(cardId) ? normalizeCard(data.card) : card))
+        );
+      } else {
+        await loadCards();
+      }
+
+      return true;
+    } catch (err) {
+      console.error(err);
+      alert(`카드 수정 중 오류가 발생했습니다.\n${err?.message || ""}`);
       return false;
     } finally {
       setIsSyncing(false);
@@ -297,7 +383,7 @@ export default function App() {
       <div className="flex min-h-screen">
         <aside
           className={`hidden flex-col border-r border-slate-200/70 bg-white/90 px-4 py-6 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.45)] backdrop-blur transition-all duration-200 lg:flex ${
-            collapsed ? "w-24" : "w-72"
+            collapsed ? "w-28" : "w-80"
           }`}
         >
           <div className={`mb-8 ${collapsed ? "flex justify-center" : "flex items-center justify-between gap-3"}`}>
@@ -306,8 +392,11 @@ export default function App() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-md bg-gradient-to-br from-slate-900 to-slate-700 text-white shadow-md">
                   <span className="text-base font-bold">P</span>
                 </div>
-                <div>
-                  <div className="text-sm font-semibold text-slate-900">증적관리 시스템</div>
+                <div className="min-w-0 flex-1 text-center">
+                  <div className="portal-title font-semibold leading-tight">
+                    <span className="block whitespace-nowrap">개인정보 수탁사 점검</span>
+                    <span className="block whitespace-nowrap">대응 포털</span>
+                  </div>
                 </div>
               </div>
             )}
@@ -357,7 +446,7 @@ export default function App() {
                 <Menu className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-sm font-semibold text-slate-900">증적관리 시스템</div>
+                <div className="text-sm font-semibold text-slate-900">개인정보 수탁사 점검 대응 포털</div>
                 <div className="text-xs text-slate-500">모바일 메뉴</div>
               </div>
             </div>
@@ -393,18 +482,34 @@ export default function App() {
               </div>
             )}
 
-            {menu === "dashboard" && <DashboardView cards={cards} reportCount={reportCards.length} />}
+            {menu === "dashboard" && (
+              <DashboardView
+                cards={cards}
+                reportCount={reportCards.length}
+                onSelectCategory={handleSelectDashboardCategory}
+              />
+            )}
             {menu === "register" && <RegisterView onCreateCard={handleCreateCard} isSyncing={isSyncing} />}
             {menu === "query" && (
               <QueryView
                 cards={cards}
                 reportCardIds={reportCardIds}
+                categoryFilter={queryCategoryFilter}
+                onClearCategoryFilter={() => setQueryCategoryFilter("")}
                 onAddToReport={handleAddToReport}
                 onDeleteCard={handleDeleteCard}
+                onUpdateCard={handleUpdateCard}
                 isSyncing={isSyncing}
               />
             )}
-            {menu === "report" && <ReportView reportCards={reportCards} onGeneratePdf={handleGenerateReportPdf} />}
+            {menu === "report" && (
+              <ReportView
+                reportCards={reportCards}
+                onGeneratePdf={handleGenerateReportPdf}
+                onUpdateCard={handleUpdateCard}
+                isSyncing={isSyncing}
+              />
+            )}
           </div>
         </main>
       </div>
