@@ -32,8 +32,8 @@ jobs:
 
       - name: Build
         env:
-          # Pages 하위 경로 배포용 base
-          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          # Custom domain은 "/"를 쓰고, 하위 경로 배포가 필요할 때만 Repository Variable로 덮어씁니다.
+          VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH }}
           # Apps Script Web App URL (Repository Variables 또는 Secrets)
           VITE_GOOGLE_BRIDGE_URL: ${{ vars.VITE_GOOGLE_BRIDGE_URL || secrets.VITE_GOOGLE_BRIDGE_URL }}
         run: |
