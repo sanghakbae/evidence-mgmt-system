@@ -1,83 +1,104 @@
 # 개인정보 수탁사 점검 대응 포털
 
-개인정보 수탁사 점검 대응을 위해 질문, 답변, 증적 파일을 카드 단위로 등록하고 관리하는 React 기반 운영 포털입니다.  
-카드를 조회하면서 증적을 확인하고, 필요한 항목을 리포트 대상으로 모아 출력 미리보기와 PDF 인쇄까지 진행할 수 있습니다.
+개인정보 수탁사 점검 대응을 위해 질문, 답변, 증적 파일을 카드 단위로 관리하는 React 기반 운영 포털입니다. 점검 질문을 빠르게 검색하고, 증적을 모아 리포트 형태로 정리한 뒤 브라우저 인쇄를 통해 PDF로 제출하는 흐름에 맞춰 설계되어 있습니다.
 
-## 목적
+운영 접속 도메인은 `privacy.sanghak.kr` 기준으로 관리할 수 있으며, 프런트엔드는 정적 배포되고 데이터 저장은 Google Apps Script Web App을 통해 Google Sheets와 Google Drive에 위임합니다.
 
-이 프로젝트는 고객사 또는 내부 점검 요청 시 아래 작업을 빠르게 처리하기 위한 용도로 만들어졌습니다.
+## 개요
 
-- 수탁사 점검 질문을 카드 단위로 정리
-- 질문별 표준 답변을 사전에 축적
-- 이미지, 문서 등 증적 파일을 함께 보관
-- 자주 요구되는 항목을 즉시 검색
-- 리포트 제출용 카드만 별도로 선별
-- 점검 대응 자료를 반복 재작성하지 않고 재사용
+이 프로젝트는 다음 상황을 줄이기 위해 만들어졌습니다.
+
+- 반복적으로 들어오는 수탁사 점검 질문을 매번 다시 작성하는 문제
+- 답변과 증적 파일이 분산되어 있어 제출 자료를 묶는 데 시간이 오래 걸리는 문제
+- 비슷한 질문이 들어와도 기존 대응 이력을 재사용하기 어려운 문제
+- 제출용 리포트와 운영용 원본 데이터가 분리되어 관리되는 문제
+
+핵심 목표는 아래 3가지입니다.
+
+- 질문, 답변, 증적을 카드 단위로 일관되게 축적
+- 검색과 자동 분류를 통해 필요한 항목을 즉시 재사용
+- 제출 대상 카드만 골라 출력용 리포트로 변환
 
 ## 주요 기능
 
 ### 1. 대시보드
 
-- 전체 카드 수, 전체 증적 수, 최근 갱신일, 리포트 대상 수 요약
-- 카테고리 분포 도넛 차트
-- 최근 등록 카드 목록
-- 카테고리 분포 우측 항목 클릭 시 `카드 조회` 화면으로 이동하면서 해당 카테고리만 필터링
+- 전체 카드 수, 전체 증적 수, 최근 갱신일, 리포트 대상 수를 요약해서 표시합니다.
+- 카테고리 분포를 도넛 차트로 보여 줍니다.
+- 최근 등록 카드 10건을 빠르게 확인할 수 있습니다.
+- 카테고리 항목을 클릭하면 `카드 조회` 화면으로 이동하면서 해당 카테고리 필터가 적용됩니다.
 
 ### 2. 카드 등록
 
-- 질문 / 답변 입력
-- 로컬 파일 선택으로 증적 첨부
-- 첨부한 증적 파일 미리보기
-- 저장 전 첨부 파일 삭제
-- 질문과 답변 내용을 기반으로 자동 태그 분류
+- 질문과 답변을 각각 입력할 수 있습니다.
+- 로컬 파일을 여러 개 선택해 증적으로 첨부할 수 있습니다.
+- 선택한 파일은 저장 전에 미리보기 목록으로 확인할 수 있습니다.
+- 질문과 답변 내용을 기준으로 자동 카테고리 분류가 수행됩니다.
+- 저장이 성공하면 입력 필드와 임시 첨부 목록이 초기화됩니다.
 
 ### 3. 카드 조회
 
-- 질문, 답변, 태그, 증적명 기준 검색
-- 질문 검색은 입력한 문자열 중 한 글자라도 질문에 포함되면 검색되도록 동작
-- 카드 목록과 카드 상세를 좌우 2패널로 표시
-- 카드 상세에서 질문 / 답변 / 증적 확인
-- 카드 상세에서 카드 수정 가능
-- 수정 모드에서 질문, 답변, 증적 추가, 기존 증적 삭제 가능
-- 카드 삭제 시 랜덤 확인값 입력 필요
-- 선택한 카드를 리포트 생성 목록에 추가 가능
+- 카드 목록과 카드 상세를 2패널 구조로 제공합니다.
+- 검색은 현재 질문 텍스트 기준으로 동작합니다.
+- 대시보드에서 넘어온 카테고리 필터를 유지한 채 목록을 탐색할 수 있습니다.
+- 카드 상세에서 질문, 답변, 분류 카테고리, 증적을 확인할 수 있습니다.
+- 카드 수정 시 질문/답변 변경, 새 증적 추가, 기존 증적 삭제가 가능합니다.
+- 카드 삭제는 랜덤 확인값을 입력해야 실행됩니다.
+- 선택한 카드를 리포트 대상 목록에 추가할 수 있습니다.
 
 ### 4. 리포트 생성
 
-- 리포트에 추가된 카드 목록 확인
-- 리포트 목록 내 카드 질문 / 답변 직접 수정
-- 출력 미리보기 HTML 생성
-- 브라우저 인쇄 기능을 이용한 PDF 저장 / 출력
+- 리포트에 포함된 카드 목록을 따로 확인할 수 있습니다.
+- 리포트 화면 안에서 질문과 답변을 다시 수정할 수 있습니다.
+- 출력 미리보기 HTML을 생성합니다.
+- 브라우저 인쇄 기능으로 PDF 저장 또는 출력이 가능합니다.
+
+## 사용자 흐름
+
+일반적인 운영 순서는 아래와 같습니다.
+
+1. 앱 진입 시 브리지 상태를 확인하고 카드 목록을 불러옵니다.
+2. 카드 등록 화면에서 질문, 답변, 증적을 저장합니다.
+3. 카드 조회 화면에서 검색과 카테고리 필터로 필요한 카드를 찾습니다.
+4. 리포트에 포함할 카드만 선택합니다.
+5. 리포트 생성 화면에서 질문/답변을 제출용 문맥에 맞게 다듬습니다.
+6. 출력 미리보기를 생성하고 브라우저 인쇄로 PDF를 저장합니다.
 
 ## 기술 스택
 
 - React 18
-- Vite 5
-- Tailwind CSS
+- Vite 8
+- Tailwind CSS 3
 - Framer Motion
 - Lucide React
 - Google Apps Script Web App
 - Google Sheets
 - Google Drive
 
-## 동작 구조
+## 아키텍처
 
-프론트엔드는 Vite/React로 구성되어 있고, 데이터 저장은 Google Apps Script Web App을 통해 처리됩니다.
+프런트엔드는 Vite 기반 정적 애플리케이션이고, 저장과 조회는 Google Apps Script Web App을 통해 수행합니다.
 
-### 저장 위치
+### 데이터 저장 위치
 
 - 질문/답변/증적 메타데이터: Google Sheets
-- 실제 증적 파일: Google Drive 폴더
+- 실제 증적 파일: Google Drive
 
-### 프론트 흐름
+### 프런트 동작 흐름
 
-1. 앱 진입 시 `health`, `listCards` 호출
-2. Sheets 데이터를 카드 배열로 로딩
-3. 카드 등록/수정/삭제 시 Apps Script Web App 호출
-4. 응답을 기준으로 프론트 상태 갱신
-5. 리포트 생성 시 선택된 카드만 HTML 리포트로 변환
+1. 앱 시작 시 `health` 호출로 브리지 연결 가능 여부를 확인합니다.
+2. 연결이 가능하면 `listCards` 호출로 카드 목록을 가져옵니다.
+3. 카드 생성/수정/삭제는 모두 Apps Script Web App으로 요청합니다.
+4. 응답 성공 시 프런트 상태와 로컬 캐시를 갱신합니다.
+5. 리포트 생성 시 선택된 카드만 HTML 문자열로 변환합니다.
 
-## 화면 구성
+### 로컬 캐시
+
+- 카드 목록은 브라우저 `localStorage` 에 약 3분 TTL로 캐시됩니다.
+- 마지막으로 선택한 메뉴도 `localStorage` 에 저장됩니다.
+- 브리지가 잠시 불안정해도 최근 카드 목록을 일정 시간 재사용할 수 있습니다.
+
+## 메뉴 구성
 
 좌측 메뉴는 아래 4개 섹션으로 구성됩니다.
 
@@ -86,13 +107,17 @@
 - 카드 조회
 - 리포트 생성
 
-## 자동 태그 분류
+## 자동 카테고리 분류
 
-질문과 답변 텍스트를 기준으로 카테고리를 자동 추론합니다.
+자동 분류는 [src/utils/categories.js](/Users/shbae-pc/Tools/evidence-mgmt-system/src/utils/categories.js:1) 에 정의되어 있습니다.
 
-- 약한 키워드 일치: +1
-- 강한 키워드 일치: +3
-- 점수가 높은 순서대로 복수 태그 반환
+동작 방식은 아래와 같습니다.
+
+- 질문과 답변 텍스트를 합쳐 하나의 분석 문자열로 만듭니다.
+- 일반 키워드 일치 시 카테고리 점수에 `+1` 을 부여합니다.
+- 강한 키워드 일치 시 카테고리 점수에 `+3` 을 부여합니다.
+- 점수가 높은 순서대로 카테고리 배열을 반환합니다.
+- 어떤 규칙에도 걸리지 않으면 `기타` 를 반환합니다.
 
 현재 대표 카테고리는 아래와 같습니다.
 
@@ -108,7 +133,24 @@
 - 교육훈련
 - 기타
 
-분류 규칙은 [src/utils/categories.js](/Users/shbae-pc/Tools/consignee-audit/src/utils/categories.js) 에 정의되어 있습니다.
+## 검색 동작
+
+카드 검색은 [src/views/QueryView.jsx](/Users/shbae-pc/Tools/evidence-mgmt-system/src/views/QueryView.jsx:1) 에 구현되어 있습니다.
+
+- 현재 검색 대상은 질문 텍스트입니다.
+- 검색어는 대소문자 구분 없이 포함 여부로 판별합니다.
+- 카테고리 필터가 적용된 상태에서는 필터 조건을 먼저 통과한 카드만 검색됩니다.
+- 검색 결과가 없으면 상세 패널도 함께 비활성화됩니다.
+
+## 리포트 출력 방식
+
+출력용 HTML은 [src/utils/report.js](/Users/shbae-pc/Tools/evidence-mgmt-system/src/utils/report.js:1) 에서 생성합니다.
+
+- 카드별로 질문, 답변, 카테고리 태그, 증적 목록을 섹션 단위로 렌더링합니다.
+- 이미지 증적은 Google Drive 썸네일 URL을 우선 시도합니다.
+- 썸네일이 실패하면 `uc?export=view` URL로 한 번 더 대체 시도합니다.
+- 그래도 이미지 로딩이 실패하면 `미리보기 불가` 상태로 출력합니다.
+- 문서형 증적은 파일명 중심으로 리포트에 포함됩니다.
 
 ## 프로젝트 구조
 
@@ -136,6 +178,35 @@
 └─ README.md
 ```
 
+## 주요 파일 설명
+
+- [src/App.jsx](/Users/shbae-pc/Tools/evidence-mgmt-system/src/App.jsx:1)
+  앱 루트입니다. 브리지 연결 확인, 카드 로딩, 카드 생성/수정/삭제, 메뉴 상태, 리포트 미리보기 상태를 관리합니다.
+
+- [src/constants.js](/Users/shbae-pc/Tools/evidence-mgmt-system/src/constants.js:1)
+  메뉴 정의, Google Sheets 링크, Drive 폴더 링크, `VITE_GOOGLE_BRIDGE_URL` 환경 변수 연결을 담당합니다.
+
+- [src/views/DashboardView.jsx](/Users/shbae-pc/Tools/evidence-mgmt-system/src/views/DashboardView.jsx:1)
+  통계 카드, 최근 등록 카드, 카테고리 도넛 차트를 렌더링합니다.
+
+- [src/views/RegisterView.jsx](/Users/shbae-pc/Tools/evidence-mgmt-system/src/views/RegisterView.jsx:1)
+  질문/답변 입력, 증적 첨부, 자동 카테고리 분류, 카드 저장 UI를 담당합니다.
+
+- [src/views/QueryView.jsx](/Users/shbae-pc/Tools/evidence-mgmt-system/src/views/QueryView.jsx:1)
+  카드 목록 탐색, 검색, 상세 보기, 카드 수정, 카드 삭제, 리포트 추가 기능을 담당합니다.
+
+- [src/views/ReportView.jsx](/Users/shbae-pc/Tools/evidence-mgmt-system/src/views/ReportView.jsx:1)
+  리포트 포함 카드 목록, 질문/답변 편집, 출력 미리보기 버튼을 제공합니다.
+
+- [src/utils/categories.js](/Users/shbae-pc/Tools/evidence-mgmt-system/src/utils/categories.js:1)
+  자동 카테고리 규칙과 카드 정규화 로직을 정의합니다.
+
+- [src/utils/report.js](/Users/shbae-pc/Tools/evidence-mgmt-system/src/utils/report.js:1)
+  출력용 HTML 리포트 문자열을 생성합니다.
+
+- [src/utils/format.js](/Users/shbae-pc/Tools/evidence-mgmt-system/src/utils/format.js:1)
+  날짜 포맷과 HTML 이스케이프 처리를 담당합니다.
+
 ## 로컬 실행
 
 ### 1. 의존성 설치
@@ -155,9 +226,11 @@ VITE_GOOGLE_BRIDGE_URL=https://script.google.com/macros/s/배포ID/exec
 설명:
 
 - `VITE_GOOGLE_BRIDGE_URL`
-  - Google Apps Script Web App의 `exec` URL
-  - 반드시 `/exec` URL을 사용해야 함
-  - `/dev` URL을 넣으면 운영 배포에서 정상 동작하지 않을 수 있음
+  Google Apps Script Web App의 `exec` URL 입니다.
+- 반드시 `/exec` URL 을 사용해야 합니다.
+- `/dev` URL 을 넣으면 권한 또는 동작 방식 차이로 운영 환경에서 실패할 수 있습니다.
+
+현재 프런트엔드에서 사용하는 환경 변수는 이것 하나뿐입니다. `VITE_GOOGLE_CLIENT_ID` 는 이 코드베이스에서 사용하지 않습니다.
 
 ### 3. 개발 서버 실행
 
@@ -165,9 +238,7 @@ VITE_GOOGLE_BRIDGE_URL=https://script.google.com/macros/s/배포ID/exec
 npm run dev
 ```
 
-기본 접속 주소:
-
-- `http://localhost:5173`
+기본 포트는 `5173` 이며, 이미 사용 중이면 Vite가 다른 포트로 자동 전환합니다.
 
 ### 4. 프로덕션 빌드 확인
 
@@ -175,9 +246,14 @@ npm run dev
 npm run build
 ```
 
-## 환경 변수
+## 스크립트
 
-이 프로젝트에서 현재 프론트엔드에 필요한 환경 변수는 아래 하나입니다.
+```bash
+npm run dev
+npm run build
+```
+
+## 환경 변수
 
 | 변수명 | 설명 | 예시 |
 |---|---|---|
@@ -185,9 +261,9 @@ npm run build
 
 ## Google Apps Script 연동
 
-프론트는 Apps Script Web App을 브리지처럼 사용합니다.
+프런트는 Apps Script Web App을 브리지처럼 사용합니다.
 
-### 프론트에서 사용하는 액션
+### 프런트에서 호출하는 액션
 
 - `GET ?action=health`
 - `GET ?action=listCards`
@@ -205,36 +281,36 @@ npm run build
 }
 ```
 
-### Apps Script 배포 시 주의사항
+### 배포 시 주의사항
 
-- 코드 저장만으로는 Web App에 반영되지 않음
-- 수정 후 반드시 `새 버전`으로 재배포 필요
-- `updateCard` 추가 후에도 재배포하지 않으면 프론트 수정 기능이 실패함
+- Apps Script는 코드 저장만으로 Web App 반영이 끝나지 않습니다.
+- 수정 후 반드시 새 버전으로 다시 배포해야 합니다.
+- `updateCard` 또는 `deleteCard` 를 추가해도 재배포하지 않으면 프런트에서 해당 기능이 실패합니다.
 
-권장 확인 방법:
+권장 확인 순서:
 
-1. Apps Script 저장
-2. `배포 > 배포 관리`
+1. Apps Script 코드 저장
+2. `배포 > 배포 관리` 로 이동
 3. 새 버전으로 Web App 재배포
 4. 브라우저에서 `.../exec?action=health` 호출
-5. `supports`에 `updateCard`가 포함되어 있는지 확인
+5. `supports` 배열에 필요한 액션이 모두 포함되어 있는지 확인
 
 ## Google Sheets / Drive 구성
 
-현재 연동 기준 값은 [src/constants.js](/Users/shbae-pc/Tools/consignee-audit/src/constants.js) 에 연결되어 있습니다.
+연결용 상수는 [src/constants.js](/Users/shbae-pc/Tools/evidence-mgmt-system/src/constants.js:1) 에 정의되어 있습니다.
 
 - Google Sheets
-  - 질문/답변/증적 메타데이터 저장
+  질문, 답변, 증적 메타데이터를 저장합니다.
 - Google Drive Folder
-  - 업로드된 증적 원본 저장
+  업로드된 증적 원본을 저장합니다.
 
-Apps Script 예시 헤더:
+Apps Script 측 헤더 예시는 아래와 같습니다.
 
 ```javascript
 const HEADERS = ["id", "category", "question", "answer", "evidences_json", "updatedAt"];
 ```
 
-### 저장 데이터 예시
+저장 데이터 예시:
 
 - `id`: 카드 ID
 - `category`: 대표 카테고리
@@ -243,143 +319,111 @@ const HEADERS = ["id", "category", "question", "answer", "evidences_json", "upda
 - `evidences_json`: 증적 파일 메타데이터 배열(JSON 문자열)
 - `updatedAt`: 마지막 수정일
 
-## 배포
+## 배포 가이드
 
-### 1. Amplify 배포
+프런트는 정적 호스팅에 올릴 수 있고, 백엔드는 Apps Script가 담당합니다.
 
-Amplify에서 배포할 경우 환경 변수에 아래 값을 넣어야 합니다.
+### 운영 도메인
 
-- 이름: `VITE_GOOGLE_BRIDGE_URL`
-- 값: Apps Script Web App `exec` URL
+- 운영 도메인 예시: `privacy.sanghak.kr`
+- 정적 호스팅은 원하는 플랫폼을 사용할 수 있지만, 빌드 시점에 `VITE_GOOGLE_BRIDGE_URL` 이 반드시 주입되어야 합니다.
 
-예시:
+### 배포 체크리스트
 
-```text
-VITE_GOOGLE_BRIDGE_URL=https://script.google.com/macros/s/AKfycb.../exec
-```
+1. 프런트 빌드 환경에 `VITE_GOOGLE_BRIDGE_URL` 설정
+2. Apps Script Web App 외부 접근 가능 여부 확인
+3. `health` 응답으로 액션 배포 상태 확인
+4. 정적 호스팅 서비스에 최신 브랜치 반영
+5. 운영 도메인 연결 또는 DNS 설정 확인
 
-배포 순서:
+### GitHub 기반 정적 배포
 
-1. Amplify 앱 생성
-2. GitHub 저장소 연결
-3. `Environment variables`에 `VITE_GOOGLE_BRIDGE_URL` 추가
-4. 배포 실행
+GitHub 연동 배포를 쓴다면 아래만 맞으면 됩니다.
 
-주의:
+- 저장소 연결
+- 빌드 명령 `npm run build`
+- 출력 디렉터리 `dist`
+- 환경 변수 `VITE_GOOGLE_BRIDGE_URL` 등록
 
-- Apps Script Web App이 외부 접근 가능한 상태여야 함
-- 환경 변수 변경 후에는 다시 빌드/배포해야 반영됨
+정적 배포 서비스 종류와 관계없이 프런트 요구사항은 동일합니다.
 
-### 2. GitHub Pages / 기타 정적 호스팅
+## 운영 시 자주 보는 이슈
 
-정적 호스팅 환경에서도 핵심은 동일합니다.
+### 1. 카드 목록이 비어 있는 경우
 
-- `VITE_GOOGLE_BRIDGE_URL` 환경 변수 주입 필요
-- 프론트는 정적 파일로 배포 가능
-- 데이터 저장은 Apps Script가 담당
+원인 후보:
 
-## 주요 파일 설명
+- `VITE_GOOGLE_BRIDGE_URL` 누락
+- 잘못된 `/dev` URL 사용
+- Apps Script 권한 또는 배포 문제
 
-- [src/App.jsx](/Users/shbae-pc/Tools/consignee-audit/src/App.jsx)
-  - 앱 루트
-  - 브리지 연결 확인
-  - 카드 로딩 / 생성 / 수정 / 삭제
-  - 메뉴 전환
-  - 리포트 출력 미리보기 제어
+확인 방법:
 
-- [src/views/DashboardView.jsx](/Users/shbae-pc/Tools/consignee-audit/src/views/DashboardView.jsx)
-  - 대시보드 통계
-  - 카테고리 도넛 차트
-  - 최근 등록 카드
+1. 브라우저 콘솔 또는 화면 상단 연결 메시지 확인
+2. `.../exec?action=health` 직접 호출
+3. `listCards` 가 실제 데이터를 반환하는지 확인
 
-- [src/views/RegisterView.jsx](/Users/shbae-pc/Tools/consignee-audit/src/views/RegisterView.jsx)
-  - 카드 등록 화면
-  - 질문/답변 입력
-  - 증적 첨부 및 삭제
+### 2. 카드 수정이 실패하는 경우
 
-- [src/views/QueryView.jsx](/Users/shbae-pc/Tools/consignee-audit/src/views/QueryView.jsx)
-  - 카드 조회 / 카드 상세
-  - 검색, 필터링
-  - 카드 수정
-  - 증적 추가 / 삭제
-  - 랜덤값 확인 삭제
-
-- [src/views/ReportView.jsx](/Users/shbae-pc/Tools/consignee-audit/src/views/ReportView.jsx)
-  - 리포트 포함 카드 목록
-  - 리포트 대상 카드 질문 / 답변 수정
-
-- [src/utils/report.js](/Users/shbae-pc/Tools/consignee-audit/src/utils/report.js)
-  - 출력용 HTML 리포트 생성
-
-## 운영 시 주의할 점
-
-### 1. 카드 수정 기능이 안 되는 경우
-
-증상:
+대표 증상:
 
 - `카드 수정 중 오류가 발생했습니다.`
 - `백엔드에 updateCard 액션이 배포되지 않았습니다.`
 
-원인:
+원인 후보:
 
-- Apps Script 코드에는 `updateCard`를 넣었지만 Web App 재배포를 하지 않은 경우
+- Apps Script 코드 수정 후 재배포 누락
+- `supports` 에 `updateCard` 없음
 
-조치:
-
-1. Apps Script 코드 저장
-2. 새 버전 배포
-3. `health` 응답 확인
-
-### 2. 카드 삭제 실패
+### 3. 카드 삭제가 실패하는 경우
 
 원인 후보:
 
-- `deleteCard` 액션 누락
+- `deleteCard` 액션 미배포
+- 카드 ID 불일치
 - Apps Script 재배포 누락
-- Sheets에서 대상 카드 ID 불일치
 
-### 3. 증적 이미지가 안 보이는 경우
+### 4. 증적 이미지가 보이지 않는 경우
 
 원인 후보:
 
 - Google Drive 권한 문제
 - 썸네일 URL 접근 제한
+- 원본 파일 형식 문제
 
-현재 앱은 썸네일 URL과 대체 URL을 순차적으로 시도합니다.
+앱은 썸네일 URL과 대체 URL을 순차적으로 시도하지만, Drive 권한이 막혀 있으면 미리보기가 실패할 수 있습니다.
 
-### 4. 환경 변수 누락
+### 5. 로컬에서는 되는데 운영에서 안 되는 경우
 
-증상:
+원인 후보:
 
-- 카드 목록이 비어 있음
-- 브리지 연결 실패 메시지 표시
+- 배포 환경 변수 미주입
+- 오래된 프런트 빌드 배포
+- Apps Script 최신 버전 미배포
 
-조치:
+## 성능 참고
 
-- `VITE_GOOGLE_BRIDGE_URL` 값 확인
-- `/exec` URL 사용 여부 확인
+카드 수가 늘어나면 현재 구조에서 병목이 생길 수 있습니다.
 
-## 성능 관점 참고
+주요 이유:
 
-등록 카드 수가 많아지면 현재 구조에서 느려질 수 있습니다.
-
-주요 원인:
-
-- `listCards`가 전체 시트를 매번 읽음
-- 카드 목록 조회 시 증적 메타데이터까지 함께 내려옴
+- `listCards` 가 전체 시트를 읽습니다.
+- 목록 조회 시 증적 메타데이터도 함께 내려옵니다.
+- 프런트가 단일 응답으로 전체 카드를 메모리에 올립니다.
 
 개선 방향:
 
-- `listCards`를 목록 조회 / 상세 조회로 분리
+- `listCards` 를 목록 조회와 상세 조회로 분리
 - Apps Script `CacheService` 적용
-- 카드 수가 크게 늘면 Firebase, Supabase 등 별도 DB 전환 검토
+- 증적 메타데이터 축약 응답 도입
+- 카드 수가 크게 증가하면 별도 DB 전환 검토
 
-## 스크립트
+## 개발 메모
 
-```bash
-npm run dev
-npm run build
-```
+- 브리지 URL이 없으면 앱은 연결 오류 메시지를 보여 주고 읽기/쓰기 기능이 제한됩니다.
+- 카드 ID는 문자열로 정규화해서 관리합니다.
+- 리포트 출력은 별도 PDF 라이브러리 없이 브라우저 인쇄 기능을 사용합니다.
+- 검색 로직은 현재 질문 중심이므로, 답변/증적명 통합 검색이 필요하면 `QueryView` 확장이 필요합니다.
 
 ## 라이선스
 
